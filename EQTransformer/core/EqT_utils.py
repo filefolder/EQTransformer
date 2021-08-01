@@ -101,7 +101,7 @@ class DataGenerator(keras.utils.Sequence):
                  batch_size=32, 
                  n_channels=3, 
                  phase_window= 40, 
-                 shuffle=True, 
+                 shuffle = True, 
                  norm_mode = 'max',
                  label_type = 'gaussian',                 
                  augmentation = False, 
@@ -366,40 +366,46 @@ class DataGenerator(keras.utils.Sequence):
                 else:                  
                     if dataset.attrs['trace_category'] == 'earthquake_local':                   
                         if self.shift_event_r:
-                            data, spt, sst, coda_end = self._shift_event(data, spt, sst, coda_end, snr, self.shift_event_r); 
+                            data, spt, sst, coda_end = self._shift_event(data, spt, sst, coda_end, snr, self.shift_event_r)
                             
                         if self.add_event_r:
-                            data, additions = self._add_event(data, spt, sst, coda_end, snr, self.add_event_r); 
-                                
+                            data, additions = self._add_event(data, spt, sst, coda_end, snr, self.add_event_r)
+                            
                         if self.add_noise_r:
-                            data = self._add_noise(data, snr, self.add_noise_r);
+                            data = self._add_noise(data, snr, self.add_noise_r)
     
-                        if self.drop_channe_r:    
-                            data = self._drop_channel(data, snr, self.drop_channe_r);
-                            data = self._adjust_amplitude_for_multichannels(data)  
+                        if self.drop_channe_r:
+                            data = self._drop_channel(data, snr, self.drop_channe_r)
+                            data = self._adjust_amplitude_for_multichannels(data)
                                     
                         if self.scale_amplitude_r:
-                            data = self._scale_amplitude(data, self.scale_amplitude_r); 
+                            data = self._scale_amplitude(data, self.scale_amplitude_r)
                                     
-                        if self.pre_emphasis:  
-                            data = self._pre_emphasis(data) 
+                        if self.pre_emphasis:
+                            data = self._pre_emphasis(data)
                                     
-                        if self.norm_mode:    
-                            data = self._normalize(data, self.norm_mode)                            
+                        if self.norm_mode:
+                            data = self._normalize(data, self.norm_mode)
                                     
                     elif dataset.attrs['trace_category'] == 'noise':
-                        if self.drop_channe_r:    
-                            data = self._drop_channel_noise(data, self.drop_channe_r);
+                        if self.drop_channe_r:
+                            data = self._drop_channel_noise(data, self.drop_channe_r)
+                        
+                        if self.add_noise_r:
+                            data = self._add_noise(data, 10., self.add_noise_r)
                             
-                        if self.add_gap_r:    
+                        if self.add_gap_r:
                             data = self._add_gaps(data, self.add_gap_r)
                             
-                        if self.norm_mode: 
+                        if self.shift_event_r:
+                            data, _, __, ___ = self._shift_event(data, 100, 110, 120, 10., self.shift_event_r)
+                            
+                        if self.norm_mode:
                             data = self._normalize(data, self.norm_mode) 
 
             elif self.augmentation == False:  
                 if self.shift_event_r and dataset.attrs['trace_category'] == 'earthquake_local':
-                    data, spt, sst, coda_end = self._shift_event(data, spt, sst, coda_end, snr, self.shift_event_r/2);                     
+                    data, spt, sst, coda_end = self._shift_event(data, spt, sst, coda_end, snr, self.shift_event_r/2)                   
                 if self.norm_mode:                    
                     data = self._normalize(data, self.norm_mode)                          
 
@@ -430,8 +436,8 @@ class DataGenerator(keras.utils.Sequence):
 
                     if additions: 
                         add_sd = None
-                        add_spt = additions[0];
-                        add_sst = additions[1];
+                        add_spt = additions[0]
+                        add_sst = additions[1]
                         if add_spt and add_sst: 
                             add_sd = add_sst - add_spt  
                                     
@@ -479,8 +485,8 @@ class DataGenerator(keras.utils.Sequence):
                         y3[i, sst-sdif-1:self.dim, 0] = self._label(a=sst-sdif, b=sst, c=2*sdif)             
     
                     if additions: 
-                        add_spt = additions[0];
-                        add_sst = additions[1];
+                        add_spt = additions[0]
+                        add_sst = additions[1]
                         add_sd = None
                         if add_spt and add_sst: 
                             add_sd = add_sst - add_spt                     
@@ -523,8 +529,8 @@ class DataGenerator(keras.utils.Sequence):
                    
                     if additions:
                         add_sd = None
-                        add_spt = additions[0];
-                        add_sst = additions[1];
+                        add_spt = additions[0]
+                        add_sst = additions[1]
                         if add_spt and add_sst:
                             add_sd = add_sst - add_spt  
                             
