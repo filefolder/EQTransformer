@@ -90,7 +90,7 @@ class DataGenerator(keras.utils.Sequence):
 
     Returns
     --------        
-    Batches of two dictionaries: {'input': X}: pre-processed waveform as input {'detector': y1, 'picker_P': y2, 'picker_S': y3}: outputs including three separate numpy arrays as labels for detection, P, and S respectively.
+    NEEDS UPDATING: Batches of two dictionaries: {'input': X}: pre-processed waveform as input {'detector': y1, 'picker_P': y2, 'picker_S': y3}: outputs including three separate numpy arrays as labels for detection, P, and S respectively.
     
     """   
     
@@ -392,7 +392,7 @@ class DataGenerator(keras.utils.Sequence):
                             data = self._drop_channel_noise(data, self.drop_channe_r)
                         
                         if self.add_noise_r:
-                            data = self._add_noise(data, 10., self.add_noise_r)
+                            data = self._add_noise(data, np.array([10.]), self.add_noise_r)
                             
                         if self.add_gap_r:
                             data = self._add_gaps(data, self.add_gap_r)
