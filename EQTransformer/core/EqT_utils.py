@@ -203,8 +203,8 @@ class DataGenerator(keras.utils.Sequence):
     def _drop_channel(self, data, snr, rate):
         'Randomly replace values of one or two components to zeros in earthquake data'
 
-        data = np.copy(data)
-        if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
+        if np.random.uniform(0, 1) < rate and all(snr >= 10.0):
+            data = np.copy(data)
             c1 = np.random.choice([0, 1])
             c2 = np.random.choice([0, 1])
             c3 = np.random.choice([0, 1])
@@ -215,8 +215,8 @@ class DataGenerator(keras.utils.Sequence):
     def _drop_channel_noise(self, data, rate):
         'Randomly replace values of one or two components to zeros in noise data'
         
-        data = np.copy(data)
-        if np.random.uniform(0, 1) < rate: 
+        if np.random.uniform(0, 1) < rate:
+            data = np.copy(data)
             c1 = np.random.choice([0, 1])
             c2 = np.random.choice([0, 1])
             c3 = np.random.choice([0, 1])
@@ -227,17 +227,16 @@ class DataGenerator(keras.utils.Sequence):
     def _add_gaps(self, data, rate): 
         'Randomly add gaps (zeros) of different sizes into waveforms'
         
-        data = np.copy(data)
-        gap_start = np.random.randint(0, 4000)
-        gap_end = np.random.randint(gap_start, 5500)
-        if np.random.uniform(0, 1) < rate: 
+        if np.random.uniform(0, 1) < rate:
+            data = np.copy(data)
+            gap_start = np.random.randint(0, 4000)
+            gap_end = np.random.randint(gap_start, 5500)
             data[gap_start:gap_end,:] = 0           
         return data  
     
     def _add_noise(self, data, snr, rate):
         'Randomly add Gaussian noie with a random SNR into waveforms'
         
-        data_noisy = np.empty((data.shape))
         if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
             data_noisy = np.empty((data.shape))
             data_noisy[:, 0] = data[:,0] + np.random.normal(0, np.random.uniform(0.01, 0.15)*max(data[:,0]), data.shape[0])
@@ -725,8 +724,8 @@ class PreLoadGenerator(keras.utils.Sequence):
     def _drop_channel(self, data, snr, rate):
         'Randomly replace values of one or two components to zeros in earthquake data'
         
-        data = np.copy(data)
-        if np.random.uniform(0, 1) < rate and all(snr >= 10): 
+        if np.random.uniform(0, 1) < rate and all(snr >= 10):
+            data = np.copy(data)
             c1 = np.random.choice([0, 1])
             c2 = np.random.choice([0, 1])
             c3 = np.random.choice([0, 1])
@@ -737,8 +736,8 @@ class PreLoadGenerator(keras.utils.Sequence):
     def _drop_channel_noise(self, data, rate):
         'Randomly replace values of one or two components to zeros in noise data'
         
-        data = np.copy(data)
-        if np.random.uniform(0, 1) < rate: 
+        if np.random.uniform(0, 1) < rate:
+            data = np.copy(data)
             c1 = np.random.choice([0, 1])
             c2 = np.random.choice([0, 1])
             c3 = np.random.choice([0, 1])
@@ -749,17 +748,16 @@ class PreLoadGenerator(keras.utils.Sequence):
     def _add_gaps(self, data, rate): 
         'Randomly add gaps (zeros) of different sizes into waveforms'
         
-        data = np.copy(data)
-        gap_start = np.random.randint(0, 4000)
-        gap_end = np.random.randint(gap_start, 5500)
-        if np.random.uniform(0, 1) < rate: 
+        if np.random.uniform(0, 1) < rate:
+            data = np.copy(data)
+            gap_start = np.random.randint(0, 4000)
+            gap_end = np.random.randint(gap_start, 5500)            
             data[gap_start:gap_end,:] = 0           
         return data  
     
     def _add_noise(self, data, snr, rate):
         'Randomly add Gaussian noie with a random SNR into waveforms'
         
-        data_noisy = np.empty((data.shape))
         if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
             data_noisy = np.empty((data.shape))
             data_noisy[:, 0] = data[:,0] + np.random.normal(0, np.random.uniform(0.01, 0.15)*max(data[:,0]), data.shape[0])
@@ -779,7 +777,7 @@ class PreLoadGenerator(keras.utils.Sequence):
         return data
 
     def _label(self, a=0, b=20, c=40):  
-        'Used for triangolar labeling'
+        'Used for triangular labeling'
         
         z = np.linspace(a, c, num = 2*(b-a)+1)
         y = np.zeros(z.shape)
