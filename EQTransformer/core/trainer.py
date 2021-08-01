@@ -319,8 +319,7 @@ def trainer(input_hdf5=None,
                                           use_multiprocessing=args['use_multiprocessing'],
                                           workers=multiprocessing.cpu_count(),    
                                           callbacks=callbacks, 
-                                          epochs=args['epochs'],
-                                          class_weight={0: 0.11, 1: 0.89})
+                                          epochs=args['epochs'])
             
         elif args['mode'] == 'preload': 
             X, y1, y2, y3 = data_reader(list_IDs=training+validation, 
@@ -344,8 +343,7 @@ def trainer(input_hdf5=None,
                                 epochs=args['epochs'],
                                 validation_split=args['train_valid_test_split'][1],
                                 batch_size=args['batch_size'], 
-                                callbacks=callbacks,
-                                class_weight={0: 0.11, 1: 0.89})            
+                                callbacks=callbacks)            
         else:
             print('Please specify training_mode !', flush=True)
         end_training = time.time()  
