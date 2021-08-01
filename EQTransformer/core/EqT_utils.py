@@ -153,7 +153,19 @@ class DataGenerator(keras.utils.Sequence):
         list_IDs_temp = [self.list_IDs[k] for k in indexes]
 
         X, y1, y2, y3 = self.__data_generation(list_IDs_temp)
-        return ({'input': X}, {'detector': y1, 'picker_P': y2, 'picker_S': y3})
+
+        cw1 = np.array(np.where(y1==1)).size/y1.size
+        cw2 = np.array(np.where(y2>0)).size/y2.size
+        cw3 = np.array(np.where(y3>0)).size/y3.size
+        
+        class_weights = [[cw1, 1-cw1],[cw2, 1-cw2],[cw3, 1-cw3]]
+        
+        sample_weights = np.array([y1,y2,y3].copy())
+        for i,y in enumerate([y1,y2,y3]):
+            sample_weights[i][np.where(y >0)] = class_weights[i][1]
+            sample_weights[i][np.where(y==0)] = class_weights[i][0]
+
+        return (X, [y1,y2,y3],list(sample_weights))
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
@@ -245,7 +257,7 @@ class DataGenerator(keras.utils.Sequence):
         return data
 
     def _label(self, a=0, b=20, c=40):  
-        'Used for triangolar labeling'
+        'Used for triangular labeling'
         
         z = np.linspace(a, c, num = 2*(b-a)+1)
         y = np.zeros(z.shape)
@@ -654,7 +666,6 @@ class PreLoadGenerator(keras.utils.Sequence):
 
     def __getitem__(self, index):
         'Generate one batch of data'
-        
         if self.augmentation:
             indexes = self.indexes[index*self.batch_size//2:(index+1)*self.batch_size//2]
             indexes = np.append(indexes, indexes)
@@ -663,7 +674,19 @@ class PreLoadGenerator(keras.utils.Sequence):
         list_IDs_temp = [self.list_IDs[k] for k in indexes]
 
         X, y1, y2, y3 = self.__data_generation(list_IDs_temp)
-        return ({'input': X}, {'detector': y1, 'picker_P': y2, 'picker_S': y3})
+
+        cw1 = np.array(np.where(y1==1)).size/y1.size
+        cw2 = np.array(np.where(y2>0)).size/y2.size
+        cw3 = np.array(np.where(y3>0)).size/y3.size
+        
+        class_weights = [[cw1, 1-cw1],[cw2, 1-cw2],[cw3, 1-cw3]]
+        
+        sample_weights = np.array([y1,y2,y3].copy())
+        for i,y in enumerate([y1,y2,y3]):
+            sample_weights[i][np.where(y >0)] = class_weights[i][1]    
+            sample_weights[i][np.where(y==0)] = class_weights[i][0]
+
+        return (X, [y1,y2,y3],list(sample_weights)) #convert back to list
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
