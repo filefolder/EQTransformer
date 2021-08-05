@@ -47,18 +47,18 @@ def trainer(input_hdf5=None,
             normalization_mode='std',
             augmentation=True,
             add_event_r=0.6,
-            shift_event_r=0.99,
+            shift_event_r=0.999,
             add_noise_r=0.3, 
             drop_channel_r=0.5,
             add_gap_r=0.2,
             coda_ratio=0.4,
             scale_amplitude_r=None,
             pre_emphasis=False,                
-            loss_weights=[0.05, 0.40, 0.55],
+            loss_weights=[0.03, 0.40, 0.57],
             loss_types=['binary_crossentropy', 'binary_crossentropy', 'binary_crossentropy'],
             train_valid_test_split=[0.85, 0.05, 0.10],
             mode='generator',
-            batch_size=200,
+            batch_size=256,
             epochs=200, 
             monitor='val_loss',
             patience=12,
@@ -314,12 +314,12 @@ def trainer(input_hdf5=None,
             validation_generator = DataGenerator(validation, **params_validation) 
 
             print('Started training in generator mode ...') 
-            history = model.fit_generator(generator=training_generator,
-                                          validation_data=validation_generator,
-                                          use_multiprocessing=args['use_multiprocessing'],
-                                          workers=multiprocessing.cpu_count(),    
-                                          callbacks=callbacks, 
-                                          epochs=args['epochs'])
+            history = model.fit(training_generator,
+                                validation_data=validation_generator,
+                                use_multiprocessing=args['use_multiprocessing'],
+                                workers=multiprocessing.cpu_count(),    
+                                callbacks=callbacks, 
+                                epochs=args['epochs'])
             
         elif args['mode'] == 'preload': 
             X, y1, y2, y3 = data_reader(list_IDs=training+validation, 
@@ -487,7 +487,7 @@ def _make_callback(args, save_models):
     m_name=str(args['output_name'])+'_{epoch:03d}.h5'   
     filepath=os.path.join(save_models, m_name)  
     early_stopping_monitor=EarlyStopping(monitor=args['monitor'], 
-                                           patience=args['patience']) 
+                                        patience=args['patience']) 
     checkpoint=ModelCheckpoint(filepath=filepath,
                                  monitor=args['monitor'], 
                                  mode='auto',
@@ -637,7 +637,7 @@ def _document_training(history, model, start_training, end_training, save_dir, s
         
     """   
     
-    np.save(save_dir+'/history',history)
+    #np.save(save_dir+'/history',history) BUG
     model.save(save_dir+'/final_model.h5')
     model.to_json()   
     model.save_weights(save_dir+'/model_weights.h5')

@@ -155,8 +155,8 @@ class DataGenerator(keras.utils.Sequence):
         X, y1, y2, y3 = self.__data_generation(list_IDs_temp)
 
         cw1 = np.array(np.where(y1==1)).size/y1.size
-        cw2 = np.array(np.where(y2>0)).size/y2.size
-        cw3 = np.array(np.where(y3>0)).size/y3.size
+        cw2 = np.array(np.where( y2>0)).size/y2.size
+        cw3 = np.array(np.where( y3>0)).size/y3.size
         
         class_weights = [[cw1, 1-cw1],[cw2, 1-cw2],[cw3, 1-cw3]]
         
@@ -239,15 +239,15 @@ class DataGenerator(keras.utils.Sequence):
         
         if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
             data_noisy = np.empty((data.shape))
-            data_noisy[:, 0] = data[:,0] + np.random.normal(0, np.random.uniform(0.01, 0.15)*max(data[:,0]), data.shape[0])
-            data_noisy[:, 1] = data[:,1] + np.random.normal(0, np.random.uniform(0.01, 0.15)*max(data[:,1]), data.shape[0])
-            data_noisy[:, 2] = data[:,2] + np.random.normal(0, np.random.uniform(0.01, 0.15)*max(data[:,2]), data.shape[0])    
+            data_noisy[:, 0] = data[:,0] + np.random.normal(0, np.random.uniform(0, 0.15)*abs(max(data[:,0])), data.shape[0])
+            data_noisy[:, 1] = data[:,1] + np.random.normal(0, np.random.uniform(0, 0.15)*abs(max(data[:,1])), data.shape[0])
+            data_noisy[:, 2] = data[:,2] + np.random.normal(0, np.random.uniform(0, 0.15)*abs(max(data[:,2])), data.shape[0])    
         else:
             data_noisy = data
         return data_noisy   
          
     def _adjust_amplitude_for_multichannels(self, data):
-        'Adjust the amplitude of multichaneel data'
+        'Adjust the amplitude of multichannel data'
         
         tmp = np.max(np.abs(data), axis=0, keepdims=True)
         assert(tmp.shape[-1] == data.shape[-1])
@@ -398,7 +398,7 @@ class DataGenerator(keras.utils.Sequence):
                             data = self._add_gaps(data, self.add_gap_r)
                             
                         if self.shift_event_r:
-                            data, _, __, ___ = self._shift_event(data, 100, 110, 120, 10., self.shift_event_r)
+                            data, _, __, ___ = self._shift_event(data, 0, 0, 0, 10., self.shift_event_r)
                             
                         if self.norm_mode:
                             data = self._normalize(data, self.norm_mode) 

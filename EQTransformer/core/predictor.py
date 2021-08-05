@@ -61,7 +61,7 @@ def predictor(input_dir=None,
               plot_mode='time',
               estimate_uncertainty=False, 
               number_of_sampling=5,
-              loss_weights=[0.03, 0.40, 0.58],
+              loss_weights=[0.03, 0.40, 0.57],
               loss_types=['binary_crossentropy', 'binary_crossentropy', 'binary_crossentropy'],
               input_dimention=(6000, 3),
               normalization_mode='std',
@@ -239,7 +239,7 @@ def predictor(input_dir=None,
                                        'f1': f1                                                                            
                                         })
     model.compile(loss = args['loss_types'],
-                  loss_weights =  args['loss_weights'],           
+                  loss_weights = args['loss_weights'],           
                   optimizer = Adam(lr = 0.001),
                   metrics = [f1])
     print('*** Loading is complete!', flush=True)  
@@ -565,9 +565,9 @@ def _gen_predictor(new_list, args, model):
         pred_PP = []
         pred_SS = []          
         for mc in range(args['number_of_sampling']):
-            predD, predP, predS = model.predict_generator(generator = prediction_generator,
-                                                          use_multiprocessing = args['use_multiprocessing'],
-                                                          workers = args['number_of_cpus'])
+            predD, predP, predS = model.predict(prediction_generator,
+                                                use_multiprocessing = args['use_multiprocessing'],
+                                                workers = args['number_of_cpus'])
             pred_DD.append(predD)
             pred_PP.append(predP)               
             pred_SS.append(predS)
@@ -584,9 +584,9 @@ def _gen_predictor(new_list, args, model):
         pred_SS_mean = pred_SS.mean(axis=0)
         pred_SS_std = pred_SS.std(axis=0)                       
     else:          
-        pred_DD_mean, pred_PP_mean, pred_SS_mean = model.predict_generator(generator = prediction_generator,
-                                                                           use_multiprocessing = args['use_multiprocessing'],
-                                                                           workers = args['number_of_cpus'])
+        pred_DD_mean, pred_PP_mean, pred_SS_mean = model.predict(prediction_generator,
+                                                                 use_multiprocessing = args['use_multiprocessing'],
+                                                                 workers = args['number_of_cpus'])
         pred_DD_mean = pred_DD_mean.reshape(pred_DD_mean.shape[0], pred_DD_mean.shape[1]) 
         pred_PP_mean = pred_PP_mean.reshape(pred_PP_mean.shape[0], pred_PP_mean.shape[1]) 
         pred_SS_mean = pred_SS_mean.reshape(pred_SS_mean.shape[0], pred_SS_mean.shape[1]) 
@@ -1332,10 +1332,6 @@ def _plotter_prediction(data, evi, args, save_figs, yh1, yh2, yh3, yh1_std, yh2_
         
 
 
-
-
-
-
 def _get_snr(data, pat, window = 200):
     
     """ 
@@ -1380,6 +1376,3 @@ def _get_snr(data, pat, window = 200):
         except Exception:
             pass
     return snr 
-
-
-
