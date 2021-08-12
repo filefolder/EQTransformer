@@ -36,7 +36,7 @@ deprecation._PRINT_DEPRECATION_WARNINGS = False
 def trainer(input_hdf5=None,
             input_csv=None,
             output_name=None,                
-            input_dimention=(6000, 3),
+            input_dimension=(6000, 3),
             cnn_blocks=5,
             lstm_blocks=2,
             padding='same',
@@ -81,7 +81,7 @@ def trainer(input_hdf5=None,
     output_name: str, default=None
         Output directory.
         
-    input_dimention: tuple, default=(6000, 3)
+    input_dimension: tuple, default=(6000, 3)
         OLoss types for detection, P picking, and S picking respectively. 
         
     cnn_blocks: int, default=5
@@ -198,7 +198,7 @@ def trainer(input_hdf5=None,
     "input_hdf5": input_hdf5,
     "input_csv": input_csv,
     "output_name": output_name,
-    "input_dimention": input_dimention,
+    "input_dimension": input_dimension,
     "cnn_blocks": cnn_blocks,
     "lstm_blocks": lstm_blocks,
     "padding": padding,
@@ -286,9 +286,9 @@ def trainer(input_hdf5=None,
         if args['mode'] == 'generator': 
             
             params_training = {'file_name': str(args['input_hdf5']), 
-                              'dim': args['input_dimention'][0],
+                              'dim': args['input_dimension'][0],
                               'batch_size': args['batch_size'],
-                              'n_channels': args['input_dimention'][-1],
+                              'n_channels': args['input_dimension'][-1],
                               'shuffle': args['shuffle'],  
                               'norm_mode': args['normalization_mode'],
                               'label_type': args['label_type'],
@@ -303,9 +303,9 @@ def trainer(input_hdf5=None,
                               'pre_emphasis': args['pre_emphasis']}
                         
             params_validation = {'file_name': str(args['input_hdf5']),  
-                                 'dim': args['input_dimention'][0],
+                                 'dim': args['input_dimension'][0],
                                  'batch_size': args['batch_size'],
-                                 'n_channels': args['input_dimention'][-1],
+                                 'n_channels': args['input_dimension'][-1],
                                  'shuffle': False,  
                                  'norm_mode': args['normalization_mode'],
                                  'augmentation': False}         
@@ -324,8 +324,8 @@ def trainer(input_hdf5=None,
         elif args['mode'] == 'preload': 
             X, y1, y2, y3 = data_reader(list_IDs=training+validation, 
                                        file_name=str(args['input_hdf5']), 
-                                       dim=args['input_dimention'][0], 
-                                       n_channels=args['input_dimention'][-1], 
+                                       dim=args['input_dimension'][0], 
+                                       n_channels=args['input_dimension'][-1], 
                                        norm_mode=args['normalization_mode'],
                                        augmentation=args['augmentation'],
                                        add_event_r=args['add_event_r'],
@@ -409,7 +409,7 @@ def _build_model(args):
         
     """       
     
-    inp = Input(shape=args['input_dimention'], name='input') 
+    inp = Input(shape=args['input_dimension'], name='input') 
     model = cred2(nb_filters=[8, 16, 16, 32, 32, 64, 64],
               kernel_size=[11, 9, 7, 7, 5, 5, 3],
               padding=args['padding'],
@@ -558,9 +558,9 @@ def _pre_loading(args, training, validation):
             dataset = fl.get('non_earthquake/noise/'+str(ID))
         validation_set.update( {str(ID) : dataset})  
    
-    params_training = {'dim':args['input_dimention'][0],
+    params_training = {'dim':args['input_dimension'][0],
                        'batch_size': args['batch_size'],
-                       'n_channels': args['input_dimention'][-1],
+                       'n_channels': args['input_dimension'][-1],
                        'shuffle': args['shuffle'],  
                        'norm_mode': args['normalization_mode'],
                        'label_type': args['label_type'],
@@ -574,9 +574,9 @@ def _pre_loading(args, training, validation):
                        'scale_amplitude_r': args['scale_amplitude_r'],
                        'pre_emphasis': args['pre_emphasis']}  
 
-    params_validation = {'dim': args['input_dimention'][0],
+    params_validation = {'dim': args['input_dimension'][0],
                          'batch_size': args['batch_size'],
-                         'n_channels': args['input_dimention'][-1],
+                         'n_channels': args['input_dimension'][-1],
                          'shuffle': False,  
                          'norm_mode': args['normalization_mode'],
                          'augmentation': False}  
@@ -697,7 +697,7 @@ def _document_training(history, model, start_training, end_training, save_dir, s
         the_file.write('input_csv: '+str(args['input_csv'])+'\n')
         the_file.write('output_name: '+str(args['output_name']+'_outputs')+'\n')  
         the_file.write('================== Model Parameters ========================='+'\n')   
-        the_file.write('input_dimention: '+str(args['input_dimention'])+'\n')
+        the_file.write('input_dimension: '+str(args['input_dimension'])+'\n')
         the_file.write('cnn_blocks: '+str(args['cnn_blocks'])+'\n')
         the_file.write('lstm_blocks: '+str(args['lstm_blocks'])+'\n')
         the_file.write('padding_type: '+str(args['padding'])+'\n')

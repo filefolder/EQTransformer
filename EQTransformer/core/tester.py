@@ -45,7 +45,7 @@ def tester(input_hdf5=None,
            number_of_sampling=5,
            loss_weights=[0.05, 0.40, 0.55],
            loss_types=['binary_crossentropy', 'binary_crossentropy', 'binary_crossentropy'],
-           input_dimention=(6000, 3),
+           input_dimension=(6000, 3),
            normalization_mode='std',
            mode='generator',
            batch_size=500,
@@ -98,7 +98,7 @@ def tester(input_hdf5=None,
     loss_types: list, default=['binary_crossentropy', 'binary_crossentropy', 'binary_crossentropy'] 
         Loss types for detection, P picking, and S picking respectively.
         
-    input_dimention: tuple, default=(6000, 3)
+    input_dimension: tuple, default=(6000, 3)
         Loss types for detection, P picking, and S picking respectively.          
 
     normalization_mode: str, default='std' 
@@ -147,7 +147,7 @@ def tester(input_hdf5=None,
     "number_of_sampling": number_of_sampling,
     "loss_weights": loss_weights,
     "loss_types": loss_types,
-    "input_dimention": input_dimention,
+    "input_dimension": input_dimension,
     "normalization_mode": normalization_mode,
     "mode": mode,
     "batch_size": batch_size,
@@ -234,9 +234,9 @@ def tester(input_hdf5=None,
         new_list = next(list_generator)
 
         if args['mode'].lower() == 'pre_load_generator':                
-            params_test = {'dim': args['input_dimention'][0],
+            params_test = {'dim': args['input_dimension'][0],
                            'batch_size': len(new_list),
-                           'n_channels': args['input_dimention'][-1],
+                           'n_channels': args['input_dimension'][-1],
                            'norm_mode': args['normalization_mode']}  
             test_set={}
             fl = h5py.File(args['input_hdf5'], 'r')
@@ -320,9 +320,9 @@ def tester(input_hdf5=None,
         
         else:       
             params_test = {'file_name': str(args['input_hdf5']), 
-                           'dim': args['input_dimention'][0],
+                           'dim': args['input_dimension'][0],
                            'batch_size': len(new_list),
-                           'n_channels': args['input_dimention'][-1],
+                           'n_channels': args['input_dimension'][-1],
                            'norm_mode': args['normalization_mode']}     
     
             test_generator = DataGeneratorTest(new_list, **params_test)
