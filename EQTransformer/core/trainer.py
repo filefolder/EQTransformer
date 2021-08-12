@@ -410,9 +410,9 @@ def _build_model(args):
     """       
     
     inp = Input(shape=args['input_dimension'], name='input') 
-    model = cred2(nb_filters=[8, 16, 16, 32, 32, 64, 64],
+    model = cred2(padding=args['padding'],
+              nb_filters=[8, 16, 16, 32, 32, 64, 64],
               kernel_size=[11, 9, 7, 7, 5, 5, 3],
-              padding=args['padding'],
               activationf =args['activation'],
               cnn_blocks=args['cnn_blocks'],
               BiLSTM_blocks=args['lstm_blocks'],

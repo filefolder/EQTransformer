@@ -242,7 +242,7 @@ class DataGenerator(keras.utils.Sequence):
     def _add_noise(self, data, snr, rate):
         'Randomly add Gaussian noise with a random SNR into waveforms'
         
-        if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
+        if np.random.uniform(0, 1) < rate and all(snr >= 6.0): #reduced snr from 10 to 6 
             data_noisy = np.empty((data.shape))
             data_noisy[:, 0] = data[:,0] + np.random.normal(0, np.random.uniform(0, 0.15)*abs(max(data[:,0])), data.shape[0])
             data_noisy[:, 1] = data[:,1] + np.random.normal(0, np.random.uniform(0, 0.15)*abs(max(data[:,1])), data.shape[0])
@@ -278,7 +278,7 @@ class DataGenerator(keras.utils.Sequence):
         'Used for gaussian labeling- do both y2 and y3 at once'
 
         dim = y2.shape[1]
-        g = np.exp(-(np.arange(-a,a+1))**2/(2*(a/2)**2))
+        g = np.exp(-(np.arange(-a,a+1))**2/(2*(a/3)**2))
 
         if spt:
             Lg = abs(min(0,spt-a))
@@ -2760,16 +2760,16 @@ def _decoder(filter_number, filter_size, depth, drop_rate, ker_regul, bias_regul
 
 
 def _lr_schedule(epoch):
-    ' Learning rate is scheduled to be reduced after 40, 60, 80, 90 epochs.'
+    ' Learning rate is scheduled to be reduced after 10, 20, 30, 40 epochs.'
     
     lr = 1e-3
-    if epoch > 90:
+    if epoch > 40:
         lr *= 0.5e-3
-    elif epoch > 60:
+    elif epoch > 30:
         lr *= 1e-3
-    elif epoch > 40:
-        lr *= 1e-2
     elif epoch > 20:
+        lr *= 1e-2
+    elif epoch > 10:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
@@ -2935,7 +2935,7 @@ class cred2():
         model = Model(inputs=inp, outputs=[d, P, S])
 
         model.compile(loss=self.loss_types, loss_weights=self.loss_weights,
-            optimizer=Adam(lr=_lr_schedule(0)), metrics=[f1])
+            optimizer=Adam(lr=_lr_schedule(0)), metrics=[f1]) #can optionally add 'accuracy' in metrics also
 
         return model
 
