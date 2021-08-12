@@ -240,7 +240,7 @@ class DataGenerator(keras.utils.Sequence):
         return data  
     
     def _add_noise(self, data, snr, rate):
-        'Randomly add Gaussian noie with a random SNR into waveforms'
+        'Randomly add Gaussian noise with a random SNR into waveforms'
         
         if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
             data_noisy = np.empty((data.shape))
@@ -368,9 +368,12 @@ class DataGenerator(keras.utils.Sequence):
             addp = (addp+nrotate)%org_len
             adds = (adds+nrotate)%org_len
 
-            #determine validity of these new values. basically must be wary that spick cycled over but ppick did not
-            if coda_end < addp: coda_end = org_len
-            if adds < addp: adds = None
+            #truncate coda_end to end of data where needed & remove S-pick if truncated
+            if coda_end < addp: 
+                coda_end = org_len
+            if adds < addp: 
+                coda_end = org_len
+                adds = None
 
         return data, addp, adds, coda_end
     
@@ -818,7 +821,7 @@ class PreLoadGenerator(keras.utils.Sequence):
         return data  
     
     def _add_noise(self, data, snr, rate):
-        'Randomly add Gaussian noie with a random SNR into waveforms'
+        'Randomly add Gaussian noise with a random SNR into waveforms'
         
         if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
             data_noisy = np.empty((data.shape))
