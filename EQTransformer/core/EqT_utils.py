@@ -274,7 +274,7 @@ class DataGenerator(keras.utils.Sequence):
         return y
 
 
-     def gausslabel(spt,sst,a=31):  
+    def _gausslabel(self,i,y2,y3,spt,sst,a=31):
         'Used for gaussian labeling- do both y2 and y3 at once'
 
         dim = y2.shape[1]
@@ -294,7 +294,7 @@ class DataGenerator(keras.utils.Sequence):
             R = min(dim,sst+a+1)
             y3[i,L:R,0] = g[Lg:Rg]
 
-        return
+        return y2,y3
 
     def _add_event(self, data, addp, adds, coda_end, snr, rate): 
         'Add a scaled version of the event into the empty part of the trace'
@@ -477,7 +477,7 @@ class DataGenerator(keras.utils.Sequence):
                             y1[i, spt:self.dim, 0] = 1                       
                              
 
-                    gausslabel(spt,sst,a=31)
+                    y2,y3 = self._gausslabel(i,y2,y3,spt,sst,a=31)
                     """
                     if spt and (spt-20 >= 0) and (spt+20 < self.dim):
                         y2[i, spt-20:spt+20, 0] = np.exp(-(np.arange(spt-20,spt+20)-spt)**2/(2*(10)**2))[:self.dim-(spt-20)]                
@@ -503,7 +503,7 @@ class DataGenerator(keras.utils.Sequence):
                             y1[i, add_spt:self.dim, 0] = 1
                         
                         
-                        gausslabel(add_spt,add_sst,a=31)
+                        y2,y3 = self._gausslabel(i,y2,y3,add_spt,add_sst,a=31)
                         """ 
                         if add_spt and (add_spt-20 >= 0) and (add_spt+20 < self.dim):
                             y2[i, add_spt-20:add_spt+20, 0] = np.exp(-(np.arange(add_spt-20,add_spt+20)-add_spt)**2/(2*(10)**2))[:self.dim-(add_spt-20)]
