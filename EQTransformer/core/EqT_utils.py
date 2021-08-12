@@ -3,8 +3,8 @@
 """
 Created on Wed Jul 24 19:16:51 2019
 
-@author: mostafamousavi
-last update: 06/06/2020
+@author: mostafamousavi, @filefolder
+last update: 08/05/21
 """
 from __future__ import division, print_function
 import numpy as np
@@ -89,8 +89,13 @@ class DataGenerator(keras.utils.Sequence):
         If True, waveforms will be pre emphasized. 
 
     Returns
-    --------        
-    NEEDS UPDATING: Batches of two dictionaries: {'input': X}: pre-processed waveform as input {'detector': y1, 'picker_P': y2, 'picker_S': y3}: outputs including three separate numpy arrays as labels for detection, P, and S respectively.
+    --------
+    Tuple of (X, [y1,y2,y3], [sw1,sw2,sw3]), where:
+
+    X =  pre-processed waveform as input
+    y1,y2,y3 = numpy arrays as labels for detection, P, and S respectively
+    sw1,sw2,sw3 = sample weights for detection, P, and S respectively / e.g. sw1 = [.11,.89] if 11% of the the y1 labels are non-zero
+    
     
     """   
     
@@ -230,7 +235,7 @@ class DataGenerator(keras.utils.Sequence):
         if np.random.uniform(0, 1) < rate:
             data = np.copy(data)
             gap_start = np.random.randint(0, 4000)
-            gap_end = np.random.randint(gap_start, 5500)
+            gap_end = np.random.randint(gap_start, 5900)
             data[gap_start:gap_end,:] = 0           
         return data  
     
@@ -255,7 +260,7 @@ class DataGenerator(keras.utils.Sequence):
           data *= data.shape[-1] / np.count_nonzero(tmp)
         return data
 
-    def _label(self, a=0, b=20, c=40):  
+    def _trilabel(self, a=0, b=20, c=40):  
         'Used for triangular labeling'
         
         z = np.linspace(a, c, num = 2*(b-a)+1)
@@ -267,6 +272,29 @@ class DataGenerator(keras.utils.Sequence):
         second_half = np.logical_and(b < z, z < c)
         y[second_half] = (c-z[second_half]) / (c-b)
         return y
+
+
+     def gausslabel(spt,sst,a=31):  
+        'Used for gaussian labeling- do both y2 and y3 at once'
+
+        dim = y2.shape[1]
+        g = np.exp(-(np.arange(-a,a+1))**2/(2*(a/2)**2))
+
+        if spt:
+            Lg = abs(min(0,spt-a))
+            Rg = len(g) - (spt+a-dim+1) 
+            L = max(0,spt-a)
+            R = min(dim,spt+a+1)
+            y2[i,L:R,0] = g[Lg:Rg]
+        
+        if sst:
+            Lg = abs(min(0,sst-a))
+            Rg = len(g) - (sst+a-dim+1) 
+            L = max(0,sst-a)
+            R = min(dim,sst+a+1)
+            y3[i,L:R,0] = g[Lg:Rg]
+
+        return
 
     def _add_event(self, data, addp, adds, coda_end, snr, rate): 
         'Add a scaled version of the event into the empty part of the trace'
@@ -294,7 +322,7 @@ class DataGenerator(keras.utils.Sequence):
         return data, additions    
     
     
-    def _shift_event(self, data, addp, adds, coda_end, snr, rate): 
+    def _shift_event_orig(self, data, addp, adds, coda_end, snr, rate): 
         'Randomly rotate the array to shift the event location'
         
         org_len = len(data)
@@ -317,13 +345,34 @@ class DataGenerator(keras.utils.Sequence):
             if coda_end+nrotate < org_len:                              
                 coda_end2 = coda_end+nrotate 
             else:
-                coda_end2 = org_len                 
+                coda_end2 = org_len
             if addp2 and adds2:
                 data = data2;
                 addp = addp2;
                 adds = adds2;
                 coda_end= coda_end2;                                      
-        return data, addp, adds, coda_end      
+        return data, addp, adds, coda_end
+
+
+    def _shift_event(self, data, addp, adds, coda_end, snr, rate): 
+        'Randomly rotate the array to shift the event location'
+
+        
+        if rate == 1 or np.random.uniform(0, 1) < rate:
+            org_len = len(data)
+            nrotate = np.random.randint(0,org_len) 
+            data = np.roll(data,nrotate,axis=0) #shape of data is (6000,3)
+
+            #define new values
+            coda_end = (coda_end+nrotate)%org_len
+            addp = (addp+nrotate)%org_len
+            adds = (adds+nrotate)%org_len
+
+            #determine validity of these new values. basically must be wary that spick cycled over but ppick did not
+            if coda_end < addp: coda_end = org_len
+            if adds < addp: adds = None
+
+        return data, addp, adds, coda_end
     
     def _pre_emphasis(self, data, pre_emphasis=0.97):
         'apply the pre_emphasis'
@@ -424,6 +473,9 @@ class DataGenerator(keras.utils.Sequence):
                         else:
                             y1[i, spt:self.dim, 0] = 1                       
                              
+
+                    gausslabel(spt,sst,a=31)
+                    """
                     if spt and (spt-20 >= 0) and (spt+20 < self.dim):
                         y2[i, spt-20:spt+20, 0] = np.exp(-(np.arange(spt-20,spt+20)-spt)**2/(2*(10)**2))[:self.dim-(spt-20)]                
                     elif spt and (spt-20 < self.dim):
@@ -433,6 +485,7 @@ class DataGenerator(keras.utils.Sequence):
                         y3[i, sst-20:sst+20, 0] = np.exp(-(np.arange(sst-20,sst+20)-sst)**2/(2*(10)**2))[:self.dim-(sst-20)]
                     elif sst and (sst-20 < self.dim):
                         y3[i, 0:sst+20, 0] = np.exp(-(np.arange(0,sst+20)-sst)**2/(2*(10)**2))[:self.dim-(sst-20)]
+                    """
 
                     if additions: 
                         add_sd = None
@@ -445,7 +498,10 @@ class DataGenerator(keras.utils.Sequence):
                             y1[i, add_spt:int(add_sst+(self.coda_ratio*add_sd)), 0] = 1        
                         else:
                             y1[i, add_spt:self.dim, 0] = 1
-                            
+                        
+                        
+                        gausslabel(add_spt,add_sst,a=31)
+                        """ 
                         if add_spt and (add_spt-20 >= 0) and (add_spt+20 < self.dim):
                             y2[i, add_spt-20:add_spt+20, 0] = np.exp(-(np.arange(add_spt-20,add_spt+20)-add_spt)**2/(2*(10)**2))[:self.dim-(add_spt-20)]
                         elif add_spt and (add_spt+20 < self.dim):
@@ -455,7 +511,7 @@ class DataGenerator(keras.utils.Sequence):
                             y3[i, add_sst-20:add_sst+20, 0] = np.exp(-(np.arange(add_sst-20,add_sst+20)-add_sst)**2/(2*(10)**2))[:self.dim-(add_sst-20)]
                         elif add_sst and (add_sst+20 < self.dim):
                             y3[i, 0:add_sst+20, 0] = np.exp(-(np.arange(0,add_sst+20)-add_sst)**2/(2*(10)**2))[:self.dim-(add_sst-20)]
-                                                    
+                        """                          
 
                 elif self.label_type  == 'triangle':                      
                     sd = None    
@@ -469,20 +525,20 @@ class DataGenerator(keras.utils.Sequence):
                             y1[i, spt:self.dim, 0] = 1                     
                         
                     if spt and (spt-20 >= 0) and (spt+21 < self.dim):
-                        y2[i, spt-20:spt+21, 0] = self._label()
+                        y2[i, spt-20:spt+21, 0] = self._trilabel()
                     elif spt and (spt+21 < self.dim):
-                        y2[i, 0:spt+spt+1, 0] = self._label(a=0, b=spt, c=2*spt)
+                        y2[i, 0:spt+spt+1, 0] = self._trilabel(a=0, b=spt, c=2*spt)
                     elif spt and (spt-20 >= 0):
                         pdif = self.dim - spt
-                        y2[i, spt-pdif-1:self.dim, 0] = self._label(a=spt-pdif, b=spt, c=2*pdif)
+                        y2[i, spt-pdif-1:self.dim, 0] = self._trilabel(a=spt-pdif, b=spt, c=2*pdif)
          
                     if sst and (sst-20 >= 0) and (sst+21 < self.dim):
-                        y3[i, sst-20:sst+21, 0] = self._label()
+                        y3[i, sst-20:sst+21, 0] = self._trilabel()
                     elif sst and (sst+21 < self.dim):
-                        y3[i, 0:sst+sst+1, 0] = self._label(a=0, b=sst, c=2*sst)
+                        y3[i, 0:sst+sst+1, 0] = self._trilabel(a=0, b=sst, c=2*sst)
                     elif sst and (sst-20 >= 0):
                         sdif = self.dim - sst
-                        y3[i, sst-sdif-1:self.dim, 0] = self._label(a=sst-sdif, b=sst, c=2*sdif)             
+                        y3[i, sst-sdif-1:self.dim, 0] = self._trilabel(a=sst-sdif, b=sst, c=2*sdif)             
     
                     if additions: 
                         add_spt = additions[0]
@@ -497,20 +553,20 @@ class DataGenerator(keras.utils.Sequence):
                             y1[i, add_spt:self.dim, 0] = 1                     
     
                         if add_spt and (add_spt-20 >= 0) and (add_spt+21 < self.dim):
-                            y2[i, add_spt-20:add_spt+21, 0] = self._label()
+                            y2[i, add_spt-20:add_spt+21, 0] = self._trilabel()
                         elif add_spt and (add_spt+21 < self.dim):
-                            y2[i, 0:add_spt+add_spt+1, 0] = self._label(a=0, b=add_spt, c=2*add_spt)
+                            y2[i, 0:add_spt+add_spt+1, 0] = self._trilabel(a=0, b=add_spt, c=2*add_spt)
                         elif add_spt and (add_spt-20 >= 0):
                             pdif = self.dim - add_spt
-                            y2[i, add_spt-pdif-1:self.dim, 0] = self._label(a=add_spt-pdif, b=add_spt, c=2*pdif)
+                            y2[i, add_spt-pdif-1:self.dim, 0] = self._trilabel(a=add_spt-pdif, b=add_spt, c=2*pdif)
     
                         if add_sst and (add_sst-20 >= 0) and (add_sst+21 < self.dim):
-                            y3[i, add_sst-20:add_sst+21, 0] = self._label()
+                            y3[i, add_sst-20:add_sst+21, 0] = self._trilabel()
                         elif add_sst and (add_sst+21 < self.dim):
-                            y3[i, 0:add_sst+add_sst+1, 0] = self._label(a=0, b=add_sst, c=2*add_sst)
+                            y3[i, 0:add_sst+add_sst+1, 0] = self._trilabel(a=0, b=add_sst, c=2*add_sst)
                         elif add_sst and (add_sst-20 >= 0):
                             sdif = self.dim - add_sst
-                            y3[i, add_sst-sdif-1:self.dim, 0] = self._label(a=add_sst-sdif, b=add_sst, c=2*sdif) 
+                            y3[i, add_sst-sdif-1:self.dim, 0] = self._trilabel(a=add_sst-sdif, b=add_sst, c=2*sdif) 
     
     
                 elif self.label_type  == 'box':
@@ -681,17 +737,17 @@ class PreLoadGenerator(keras.utils.Sequence):
         X, y1, y2, y3 = self.__data_generation(list_IDs_temp)
 
         cw1 = np.array(np.where(y1==1)).size/y1.size
-        cw2 = np.array(np.where(y2>0)).size/y2.size
-        cw3 = np.array(np.where(y3>0)).size/y3.size
+        cw2 = np.array(np.where( y2>0)).size/y2.size
+        cw3 = np.array(np.where( y3>0)).size/y3.size
         
         class_weights = [[cw1, 1-cw1],[cw2, 1-cw2],[cw3, 1-cw3]]
         
         sample_weights = np.array([y1,y2,y3].copy())
         for i,y in enumerate([y1,y2,y3]):
-            sample_weights[i][np.where(y >0)] = class_weights[i][1]    
+            sample_weights[i][np.where(y >0)] = class_weights[i][1]
             sample_weights[i][np.where(y==0)] = class_weights[i][0]
 
-        return (X, [y1,y2,y3],list(sample_weights)) #convert back to list
+        return (X, [y1,y2,y3],list(sample_weights))
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
@@ -766,9 +822,9 @@ class PreLoadGenerator(keras.utils.Sequence):
         
         if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
             data_noisy = np.empty((data.shape))
-            data_noisy[:, 0] = data[:,0] + np.random.normal(0, np.random.uniform(0.01, 0.15)*max(data[:,0]), data.shape[0])
-            data_noisy[:, 1] = data[:,1] + np.random.normal(0, np.random.uniform(0.01, 0.15)*max(data[:,1]), data.shape[0])
-            data_noisy[:, 2] = data[:,2] + np.random.normal(0, np.random.uniform(0.01, 0.15)*max(data[:,2]), data.shape[0])    
+            data_noisy[:, 0] = data[:,0] + np.random.normal(0, np.random.uniform(0.01, 0.15)*abs(max(data[:,0])), data.shape[0])
+            data_noisy[:, 1] = data[:,1] + np.random.normal(0, np.random.uniform(0.01, 0.15)*abs(max(data[:,1])), data.shape[0])
+            data_noisy[:, 2] = data[:,2] + np.random.normal(0, np.random.uniform(0.01, 0.15)*abs(max(data[:,2])), data.shape[0])    
         else:
             data_noisy = data
         return data_noisy   
@@ -1200,7 +1256,7 @@ def data_reader( list_IDs,
         return data  
     
     def _add_noise(data, snr, rate):
-        'Randomly add Gaussian noie with a random SNR into waveforms'
+        'Randomly add Gaussian noise with a random SNR into waveforms'
         
         data_noisy = np.empty((data.shape))
         if np.random.uniform(0, 1) < rate and all(snr >= 10.0): 
@@ -2835,7 +2891,7 @@ class cred2():
                              self.activationf, 
                              self.padding,                             
                              encoded)
-        d = Conv1D(1, 11, padding = self.padding, activation='sigmoid', name='detector')(decoder_D)
+        d = Conv1D(1, self.kernel_size[0], padding = self.padding, activation='sigmoid', name='detector')(decoder_D)
 
 
         PLSTM = LSTM(self.nb_filters[1], return_sequences=True, dropout=self.drop_rate, recurrent_dropout=self.drop_rate)(encoded)
@@ -2852,7 +2908,7 @@ class cred2():
                             self.activationf, 
                             self.padding,                            
                             norm_layerP)
-        P = Conv1D(1, 11, padding = self.padding, activation='sigmoid', name='picker_P')(decoder_P)
+        P = Conv1D(1, self.kernel_size[0], padding = self.padding, activation='sigmoid', name='picker_P')(decoder_P)
         
         SLSTM = LSTM(self.nb_filters[1], return_sequences=True, dropout=self.drop_rate, recurrent_dropout=self.drop_rate)(encoded) 
         norm_layerS, weightdS = SeqSelfAttention(return_attention=True,
@@ -2870,16 +2926,14 @@ class cred2():
                             self.padding,                            
                             norm_layerS) 
         
-        S = Conv1D(1, 11, padding = self.padding, activation='sigmoid', name='picker_S')(decoder_S)
+        S = Conv1D(1, self.kernel_size[0], padding = self.padding, activation='sigmoid', name='picker_S')(decoder_S)
         
 
         model = Model(inputs=inp, outputs=[d, P, S])
 
-        model.compile(loss=self.loss_types, loss_weights=self.loss_weights,    
+        model.compile(loss=self.loss_types, loss_weights=self.loss_weights,
             optimizer=Adam(lr=_lr_schedule(0)), metrics=[f1])
 
         return model
 
         
-
-
